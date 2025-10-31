@@ -9,131 +9,185 @@
     font-family: 'Segoe UI', sans-serif;
     background: #f3f6fa;
     text-align: center;
-    padding: 40px;
+    padding: 20px;
+    margin: 0;
   }
-  h1 { color: #003366; }
+
+  h1 {
+    color: #003366;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
+
   .card {
     background: white;
-    max-width: 500px;
+    width: 95%;
+    max-width: 400px;
     margin: auto;
-    padding: 25px;
-    border-radius: 15px;
+    padding: 20px;
+    border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-sizing: border-box;
   }
+
+  label {
+    display: block;
+    text-align: left;
+    margin: 10px 0 5px;
+    font-weight: 600;
+  }
+
   input, button {
-    width: 90%;
+    width: 100%;
     padding: 10px;
-    margin: 8px 0;
+    margin-bottom: 12px;
     border-radius: 8px;
     border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-size: 1em;
   }
+
   button {
     background-color: #0077cc;
     color: white;
     cursor: pointer;
     border: none;
     font-weight: bold;
+    transition: background 0.2s;
   }
-  button:hover { background-color: #005fa3; }
+
+  button:hover {
+    background-color: #005fa3;
+  }
+
+  /* NUEVO: resultados tipo tarjeta horizontal */
   .resultado {
-    margin-top: 20px;
+    margin-top: 15px;
     font-size: 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
   }
+
+  .inversion {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
+    border-radius: 10px;
+    background: #f0f4f8;
+    flex-wrap: wrap;
+  }
+
+  .inversion p {
+    margin: 3px 0;
+    font-size: 0.95em;
+  }
+
   .positivo { color: green; font-weight: bold; }
   .negativo { color: red; font-weight: bold; }
-  table { 
-    margin: auto; 
-    border-collapse: collapse; 
-    width: 100%; 
-    font-size: 0.9em;
+  .promedio { color: #555; font-style: italic; margin-top: 10px; }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.5em; }
+    .card { max-width: 95%; padding: 15px; }
+    .inversion {
+      flex-direction: column;
+      text-align: left;
+    }
+    .inversion p {
+      font-size: 0.9em;
+    }
   }
-  th, td { border: 1px solid #ccc; padding: 6px; }
 </style>
 </head>
 <body>
 
 <h1>💰 Simulador de Inversiones</h1>
 <div class="card">
-  <p>Ingresá el monto que querés invertir en cada opción:</p>
+  <label>Monto a invertir en Plazo fijo ($):</label>
+  <input type="number" id="montoPlazo" placeholder="Ej: 50000">
 
-  <label>Plazo fijo ($):</label>
-  <input type="number" id="plazo" placeholder="Ej: 50000">
+  <label>Monto a invertir en Fondo ($):</label>
+  <input type="number" id="montoFondo" placeholder="Ej: 20000">
 
-  <label>Fondo común ($):</label>
-  <input type="number" id="fondo" placeholder="Ej: 30000">
+  <label>Monto a invertir en Acciones ($):</label>
+  <input type="number" id="montoAcciones" placeholder="Ej: 15000">
 
-  <label>Acciones ($):</label>
-  <input type="number" id="acciones" placeholder="Ej: 10000">
+  <label>Monto a invertir en Cripto ($):</label>
+  <input type="number" id="montoCripto" placeholder="Ej: 15000">
 
-  <label>Criptomonedas ($):</label>
-  <input type="number" id="cripto" placeholder="Ej: 10000">
-
-  <button onclick="simular()">Simular rendimientos</button>
+  <button onclick="simular()">Simular rendimiento</button>
+  <button onclick="reiniciar()">🔄 Probar otra combinación</button>
 
   <div class="resultado" id="resultado"></div>
 </div>
 
 <script>
 function simular() {
-  const inversiones = [
-    { tipo: "Plazo fijo", monto: parseFloat(document.getElementById("plazo").value), rango: [2,5], promedio: 4 },
-    { tipo: "Fondo común", monto: parseFloat(document.getElementById("fondo").value), rango: [-2,8], promedio: 3 },
-    { tipo: "Acciones", monto: parseFloat(document.getElementById("acciones").value), rango: [-10,15], promedio: 5 },
-    { tipo: "Criptomonedas", monto: parseFloat(document.getElementById("cripto").value), rango: [-20,25], promedio: 8 },
-  ];
+  const montos = {
+    "plazo": parseFloat(document.getElementById("montoPlazo").value) || 0,
+    "fondo": parseFloat(document.getElementById("montoFondo").value) || 0,
+    "acciones": parseFloat(document.getElementById("montoAcciones").value) || 0,
+    "cripto": parseFloat(document.getElementById("montoCripto").value) || 0
+  };
 
-  let totalInvertido = 0;
+  const tipos = {
+    "plazo": {rango: [2,5], promedio: 4},
+    "fondo": {rango: [-2,8], promedio: 3},
+    "acciones": {rango: [-10,15], promedio: 5},
+    "cripto": {rango: [-20,25], promedio: 8}
+  };
+
   let totalGanancia = 0;
-  let html = `<table>
-                <tr>
-                  <th>Inversión</th>
-                  <th>Monto</th>
-                  <th>Rendimiento</th>
-                  <th>Ganancia/Pérdida</th>
-                  <th>Promedio histórico</th>
-                </tr>`;
+  let totalInvertido = 0;
+  let resultadoHTML = "";
 
-  inversiones.forEach(inv => {
-    if(!isNaN(inv.monto) && inv.monto > 0){
-      const rendimiento = (Math.random() * (inv.rango[1] - inv.rango[0]) + inv.rango[0]).toFixed(2);
-      const ganancia = (inv.monto * (rendimiento / 100)).toFixed(2);
-      const clase = rendimiento >= 0 ? "positivo" : "negativo";
-      const signo = rendimiento >= 0 ? "+" : "";
-
-      totalInvertido += inv.monto;
+  for (let tipo in montos) {
+    if (montos[tipo] > 0) {
+      const r = tipos[tipo].rango;
+      const rendimiento = (Math.random() * (r[1]-r[0]) + r[0]).toFixed(2);
+      const ganancia = (montos[tipo] * (rendimiento/100)).toFixed(2);
       totalGanancia += parseFloat(ganancia);
+      totalInvertido += montos[tipo];
+      const clase = rendimiento >=0 ? "positivo" : "negativo";
 
-      html += `<tr>
-                <td>${inv.tipo}</td>
-                <td>$${inv.monto}</td>
-                <td class="${clase}">${signo}${rendimiento}%</td>
-                <td class="${clase}">${signo}$${ganancia}</td>
-                <td>${inv.promedio}%</td>
-              </tr>`;
+      resultadoHTML += `
+        <div class="inversion">
+          <p><strong>${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</strong></p>
+          <p>Rendimiento: <span class="${clase}">${rendimiento}%</span></p>
+          <p>Ganancia/Pérdida: <span class="${clase}">$${ganancia}</span></p>
+          <p>Promedio: ${tipos[tipo].promedio}%</p>
+        </div>
+      `;
     }
-  });
+  }
 
   const totalFinal = totalInvertido + totalGanancia;
-  const claseTotal = totalGanancia >= 0 ? "positivo" : "negativo";
-  const signoTotal = totalGanancia >= 0 ? "+" : "";
+  const claseTotal = totalGanancia >=0 ? "positivo" : "negativo";
+  resultadoHTML += `<div class="inversion">
+    <p><strong>Total invertido: $${totalInvertido}</strong></p>
+    <p>Total Ganancia/Pérdida: <span class="${claseTotal}">$${totalGanancia.toFixed(2)}</span></p>
+    <p>Total Final: <strong>$${totalFinal.toFixed(2)}</strong></p>
+  </div>`;
 
-  html += `</table>`;
-  html += `<p><strong>Total invertido:</strong> $${totalInvertido}</p>`;
-  html += `<p><strong>Ganancia/Pérdida total:</strong> <span class="${claseTotal}">${signoTotal}$${totalGanancia.toFixed(2)}</span></p>`;
-  html += `<p><strong>Total final:</strong> $${totalFinal.toFixed(2)}</p>`;
-  html += `<button onclick="resetCampos()">🔁 Ingresar otra combinación</button>`;
+  if(totalInvertido === 0){
+    resultadoHTML = "<p>Ingresá al menos un monto para simular.</p>";
+  }
 
-  document.getElementById("resultado").innerHTML = html;
+  document.getElementById("resultado").innerHTML = resultadoHTML;
 }
 
-function resetCampos() {
-  document.getElementById("plazo").value = "";
-  document.getElementById("fondo").value = "";
-  document.getElementById("acciones").value = "";
-  document.getElementById("cripto").value = "";
+function reiniciar() {
+  document.getElementById("montoPlazo").value = "";
+  document.getElementById("montoFondo").value = "";
+  document.getElementById("montoAcciones").value = "";
+  document.getElementById("montoCripto").value = "";
   document.getElementById("resultado").innerHTML = "";
 }
 </script>
 
 </body>
 </html>
+
