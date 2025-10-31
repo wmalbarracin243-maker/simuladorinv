@@ -14,13 +14,13 @@
   h1 { color: #003366; }
   .card {
     background: white;
-    max-width: 400px;
+    max-width: 500px;
     margin: auto;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   }
-  input, select, button {
+  input, button {
     width: 90%;
     padding: 10px;
     margin: 8px 0;
@@ -37,81 +37,100 @@
   button:hover { background-color: #005fa3; }
   .resultado {
     margin-top: 20px;
-    font-size: 1.1em;
+    font-size: 1em;
   }
   .positivo { color: green; font-weight: bold; }
   .negativo { color: red; font-weight: bold; }
-  .promedio { color: #555; font-style: italic; }
+  table { 
+    margin: auto; 
+    border-collapse: collapse; 
+    width: 100%; 
+    font-size: 0.9em;
+  }
+  th, td { border: 1px solid #ccc; padding: 6px; }
 </style>
 </head>
 <body>
 
 <h1>💰 Simulador de Inversiones</h1>
 <div class="card">
-  <label>Monto a invertir ($):</label>
-  <input type="number" id="monto" placeholder="Ej: 10000">
+  <p>Ingresá el monto que querés invertir en cada opción:</p>
 
-  <label>Tipo de inversión:</label>
-  <select id="tipo">
-    <option value="plazo">Plazo fijo tradicional</option>
-    <option value="fondo">Fondo común de inversión</option>
-    <option value="acciones">Acciones tecnológicas</option>
-    <option value="cripto">Criptomonedas</option>
-  </select>
+  <label>Plazo fijo ($):</label>
+  <input type="number" id="plazo" placeholder="Ej: 50000">
 
-  <button onclick="simular()">Simular rendimiento</button>
+  <label>Fondo común ($):</label>
+  <input type="number" id="fondo" placeholder="Ej: 30000">
+
+  <label>Acciones ($):</label>
+  <input type="number" id="acciones" placeholder="Ej: 10000">
+
+  <label>Criptomonedas ($):</label>
+  <input type="number" id="cripto" placeholder="Ej: 10000">
+
+  <button onclick="simular()">Simular rendimientos</button>
 
   <div class="resultado" id="resultado"></div>
 </div>
 
 <script>
 function simular() {
-  const monto = parseFloat(document.getElementById("monto").value);
-  const tipo = document.getElementById("tipo").value;
-  let rango, promedio;
+  const inversiones = [
+    { tipo: "Plazo fijo", monto: parseFloat(document.getElementById("plazo").value), rango: [2,5], promedio: 4 },
+    { tipo: "Fondo común", monto: parseFloat(document.getElementById("fondo").value), rango: [-2,8], promedio: 3 },
+    { tipo: "Acciones", monto: parseFloat(document.getElementById("acciones").value), rango: [-10,15], promedio: 5 },
+    { tipo: "Criptomonedas", monto: parseFloat(document.getElementById("cripto").value), rango: [-20,25], promedio: 8 },
+  ];
 
-  if (isNaN(monto) || monto <= 0) {
-    alert("Por favor, ingresá un monto válido.");
-    return;
-  }
+  let totalInvertido = 0;
+  let totalGanancia = 0;
+  let html = `<table>
+                <tr>
+                  <th>Inversión</th>
+                  <th>Monto</th>
+                  <th>Rendimiento</th>
+                  <th>Ganancia/Pérdida</th>
+                  <th>Promedio histórico</th>
+                </tr>`;
 
-  switch (tipo) {
-    case "plazo":
-      rango = [2, 5];
-      promedio = 4;
-      break;
-    case "fondo":
-      rango = [-2, 8];
-      promedio = 3;
-      break;
-    case "acciones":
-      rango = [-10, 15];
-      promedio = 5;
-      break;
-    case "cripto":
-      rango = [-20, 25];
-      promedio = 8;
-      break;
-  }
+  inversiones.forEach(inv => {
+    if(!isNaN(inv.monto) && inv.monto > 0){
+      const rendimiento = (Math.random() * (inv.rango[1] - inv.rango[0]) + inv.rango[0]).toFixed(2);
+      const ganancia = (inv.monto * (rendimiento / 100)).toFixed(2);
+      const clase = rendimiento >= 0 ? "positivo" : "negativo";
+      const signo = rendimiento >= 0 ? "+" : "";
 
-  const rendimiento = (Math.random() * (rango[1] - rango[0]) + rango[0]).toFixed(2);
-  const ganancia = (monto * (rendimiento / 100)).toFixed(2);
-  const total = (monto + parseFloat(ganancia)).toFixed(2);
+      totalInvertido += inv.monto;
+      totalGanancia += parseFloat(ganancia);
 
-  const clase = rendimiento >= 0 ? "positivo" : "negativo";
+      html += `<tr>
+                <td>${inv.tipo}</td>
+                <td>$${inv.monto}</td>
+                <td class="${clase}">${signo}${rendimiento}%</td>
+                <td class="${clase}">${signo}$${ganancia}</td>
+                <td>${inv.promedio}%</td>
+              </tr>`;
+    }
+  });
 
-  document.getElementById("resultado").innerHTML = `
-    <p>Resultado de esta simulación: <span class="${clase}">${rendimiento}%</span></p>
-    <p>Ganancia/Pérdida: <span class="${clase}">$${ganancia}</span></p>
-    <p>Total final: <strong>$${total}</strong></p>
-    <p class="promedio">Promedio histórico estimado para esta inversión: ${promedio}%</p>
-    <button onclick="resetear()">🔁 Probar otra combinación</button>
-  `;
+  const totalFinal = totalInvertido + totalGanancia;
+  const claseTotal = totalGanancia >= 0 ? "positivo" : "negativo";
+  const signoTotal = totalGanancia >= 0 ? "+" : "";
+
+  html += `</table>`;
+  html += `<p><strong>Total invertido:</strong> $${totalInvertido}</p>`;
+  html += `<p><strong>Ganancia/Pérdida total:</strong> <span class="${claseTotal}">${signoTotal}$${totalGanancia.toFixed(2)}</span></p>`;
+  html += `<p><strong>Total final:</strong> $${totalFinal.toFixed(2)}</p>`;
+  html += `<button onclick="resetCampos()">🔁 Ingresar otra combinación</button>`;
+
+  document.getElementById("resultado").innerHTML = html;
 }
 
-function resetear() {
-  document.getElementById("monto").value = "";
-  document.getElementById("tipo").selectedIndex = 0;
+function resetCampos() {
+  document.getElementById("plazo").value = "";
+  document.getElementById("fondo").value = "";
+  document.getElementById("acciones").value = "";
+  document.getElementById("cripto").value = "";
   document.getElementById("resultado").innerHTML = "";
 }
 </script>
