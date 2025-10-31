@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Inversiones</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f3f6fa;
+    text-align: center;
+    padding: 40px;
+  }
+  h1 { color: #003366; }
+  .card {
+    background: white;
+    max-width: 400px;
+    margin: auto;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  input, select, button {
+    width: 90%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background-color: #0077cc;
+    color: white;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+  }
+  button:hover { background-color: #005fa3; }
+  .resultado {
+    margin-top: 20px;
+    font-size: 1.1em;
+  }
+  .positivo { color: green; font-weight: bold; }
+  .negativo { color: red; font-weight: bold; }
+  .promedio { color: #555; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>💰 Simulador de Inversiones</h1>
+<div class="card">
+  <label>Monto a invertir ($):</label>
+  <input type="number" id="monto" placeholder="Ej: 10000">
+
+  <label>Tipo de inversión:</label>
+  <select id="tipo">
+    <option value="plazo">Plazo fijo tradicional</option>
+    <option value="fondo">Fondo común de inversión</option>
+    <option value="acciones">Acciones tecnológicas</option>
+    <option value="cripto">Criptomonedas</option>
+  </select>
+
+  <button onclick="simular()">Simular rendimiento</button>
+
+  <div class="resultado" id="resultado"></div>
+</div>
+
+<script>
+function simular() {
+  const monto = parseFloat(document.getElementById("monto").value);
+  const tipo = document.getElementById("tipo").value;
+  let rango, promedio;
+
+  if (isNaN(monto) || monto <= 0) {
+    alert("Por favor, ingresá un monto válido.");
+    return;
+  }
+
+  switch (tipo) {
+    case "plazo":
+      rango = [2, 5];
+      promedio = 4;
+      break;
+    case "fondo":
+      rango = [-2, 8];
+      promedio = 3;
+      break;
+    case "acciones":
+      rango = [-10, 15];
+      promedio = 5;
+      break;
+    case "cripto":
+      rango = [-20, 25];
+      promedio = 8;
+      break;
+  }
+
+  const rendimiento = (Math.random() * (rango[1] - rango[0]) + rango[0]).toFixed(2);
+  const ganancia = (monto * (rendimiento / 100)).toFixed(2);
+  const total = (monto + parseFloat(ganancia)).toFixed(2);
+
+  const clase = rendimiento >= 0 ? "positivo" : "negativo";
+
+  document.getElementById("resultado").innerHTML = `
+    <p>Resultado de esta simulación: <span class="${clase}">${rendimiento}%</span></p>
+    <p>Ganancia/Pérdida: <span class="${clase}">$${ganancia}</span></p>
+    <p>Total final: <strong>$${total}</strong></p>
+    <p class="promedio">Promedio histórico estimado para esta inversión: ${promedio}%</p>
+    <button onclick="resetear()">🔁 Probar otra combinación</button>
+  `;
+}
+
+function resetear() {
+  document.getElementById("monto").value = "";
+  document.getElementById("tipo").selectedIndex = 0;
+  document.getElementById("resultado").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
