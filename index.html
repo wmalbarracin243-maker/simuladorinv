@@ -1,193 +1,162 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador de Inversiones</title>
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f3f6fa;
-    text-align: center;
-    padding: 20px;
-    margin: 0;
-  }
-
-  h1 {
-    color: #003366;
-    font-size: 1.8em;
-    margin-bottom: 20px;
-  }
-
-  .card {
-    background: white;
-    width: 95%;
-    max-width: 400px;
-    margin: auto;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-  }
-
-  label {
-    display: block;
-    text-align: left;
-    margin: 10px 0 5px;
-    font-weight: 600;
-  }
-
-  input, button {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    font-size: 1em;
-  }
-
-  button {
-    background-color: #0077cc;
-    color: white;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-
-  button:hover {
-    background-color: #005fa3;
-  }
-
-  /* NUEVO: resultados tipo tarjeta horizontal */
-  .resultado {
-    margin-top: 15px;
-    font-size: 1em;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-align: left;
-  }
-
-  .inversion {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 10px;
-    border-radius: 10px;
-    background: #f0f4f8;
-    flex-wrap: wrap;
-  }
-
-  .inversion p {
-    margin: 3px 0;
-    font-size: 0.95em;
-  }
-
-  .positivo { color: green; font-weight: bold; }
-  .negativo { color: red; font-weight: bold; }
-  .promedio { color: #555; font-style: italic; margin-top: 10px; }
-
-  @media (max-width: 480px) {
-    h1 { font-size: 1.5em; }
-    .card { max-width: 95%; padding: 15px; }
-    .inversion {
-      flex-direction: column;
-      text-align: left;
-    }
-    .inversion p {
-      font-size: 0.9em;
-    }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Inversiones - IPR</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <header>
+    <img src="ipr.jpeg" alt="Logo IPR" class="logo">
+    <h1>Simulador de Inversiones 💰</h1>
+  </header>
 
-<h1>💰 Simulador de Inversiones</h1>
-<div class="card">
-  <label>Monto a invertir en Plazo fijo ($):</label>
-  <input type="number" id="montoPlazo" placeholder="Ej: 50000">
+  <main>
+    <section class="card">
+      <label>Monto a invertir en Plazo Fijo ($):</label>
+      <input type="number" id="montoPlazo" placeholder="Ej: 50000">
 
-  <label>Monto a invertir en Fondo ($):</label>
-  <input type="number" id="montoFondo" placeholder="Ej: 20000">
+      <label>Monto a invertir en Fondo ($):</label>
+      <input type="number" id="montoFondo" placeholder="Ej: 20000">
 
-  <label>Monto a invertir en Acciones ($):</label>
-  <input type="number" id="montoAcciones" placeholder="Ej: 15000">
+      <label>Monto a invertir en Acciones ($):</label>
+      <input type="number" id="montoAcciones" placeholder="Ej: 15000">
 
-  <label>Monto a invertir en Cripto ($):</label>
-  <input type="number" id="montoCripto" placeholder="Ej: 15000">
+      <label>Monto a invertir en Cripto ($):</label>
+      <input type="number" id="montoCripto" placeholder="Ej: 15000">
 
-  <button onclick="simular()">Simular rendimiento</button>
-  <button onclick="reiniciar()">🔄 Probar otra combinación</button>
+      <button onclick="simular()">Simular Rendimiento</button>
+      <button onclick="reiniciar()" class="btn-sec">🔄 Reiniciar</button>
+    </section>
 
-  <div class="resultado" id="resultado"></div>
-</div>
+    <section id="resultado" class="resultado"></section>
 
-<script>
-function simular() {
-  const montos = {
-    "plazo": parseFloat(document.getElementById("montoPlazo").value) || 0,
-    "fondo": parseFloat(document.getElementById("montoFondo").value) || 0,
-    "acciones": parseFloat(document.getElementById("montoAcciones").value) || 0,
-    "cripto": parseFloat(document.getElementById("montoCripto").value) || 0
-  };
+    <section class="charts">
+      <canvas id="graficoTorta"></canvas>
+      <canvas id="graficoBarras"></canvas>
+    </section>
+  </main>
 
-  const tipos = {
-    "plazo": {rango: [2,5], promedio: 4},
-    "fondo": {rango: [-2,8], promedio: 3},
-    "acciones": {rango: [-10,15], promedio: 5},
-    "cripto": {rango: [-20,25], promedio: 8}
-  };
+  <footer>
+    <p>© 2025 Instituto Privado Rivadavia - Proyecto académico</p>
+  </footer>
 
-  let totalGanancia = 0;
-  let totalInvertido = 0;
-  let resultadoHTML = "";
+  <script>
+    let chartTorta = null;
+    let chartBarras = null;
 
-  for (let tipo in montos) {
-    if (montos[tipo] > 0) {
-      const r = tipos[tipo].rango;
-      const rendimiento = (Math.random() * (r[1]-r[0]) + r[0]).toFixed(2);
-      const ganancia = (montos[tipo] * (rendimiento/100)).toFixed(2);
-      totalGanancia += parseFloat(ganancia);
-      totalInvertido += montos[tipo];
-      const clase = rendimiento >=0 ? "positivo" : "negativo";
+    function simular() {
+      const montos = {
+        "Plazo Fijo": parseFloat(document.getElementById("montoPlazo").value) || 0,
+        "Fondo": parseFloat(document.getElementById("montoFondo").value) || 0,
+        "Acciones": parseFloat(document.getElementById("montoAcciones").value) || 0,
+        "Cripto": parseFloat(document.getElementById("montoCripto").value) || 0
+      };
 
+      const tipos = {
+        "Plazo Fijo": {rango: [2,5], promedio: 4},
+        "Fondo": {rango: [-2,8], promedio: 3},
+        "Acciones": {rango: [-10,15], promedio: 5},
+        "Cripto": {rango: [-20,25], promedio: 8}
+      };
+
+      let totalGanancia = 0;
+      let totalInvertido = 0;
+      let rendimientoData = [];
+      let resultadoHTML = "";
+
+      for (let tipo in montos) {
+        if (montos[tipo] > 0) {
+          const r = tipos[tipo].rango;
+          const rendimiento = (Math.random() * (r[1] - r[0]) + r[0]).toFixed(2);
+          const ganancia = (montos[tipo] * (rendimiento / 100)).toFixed(2);
+          totalGanancia += parseFloat(ganancia);
+          totalInvertido += montos[tipo];
+          const clase = rendimiento >= 0 ? "positivo" : "negativo";
+
+          rendimientoData.push(rendimiento);
+
+          resultadoHTML += `
+            <div class="inversion">
+              <p><strong>${tipo}</strong></p>
+              <p>Rendimiento: <span class="${clase}">${rendimiento}%</span></p>
+              <p>Ganancia/Pérdida: <span class="${clase}">$${ganancia}</span></p>
+              <p>Promedio esperado: ${tipos[tipo].promedio}%</p>
+            </div>
+          `;
+        }
+      }
+
+      const totalFinal = totalInvertido + totalGanancia;
+      const claseTotal = totalGanancia >= 0 ? "positivo" : "negativo";
       resultadoHTML += `
-        <div class="inversion">
-          <p><strong>${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</strong></p>
-          <p>Rendimiento: <span class="${clase}">${rendimiento}%</span></p>
-          <p>Ganancia/Pérdida: <span class="${clase}">$${ganancia}</span></p>
-          <p>Promedio: ${tipos[tipo].promedio}%</p>
-        </div>
-      `;
+        <div class="inversion total">
+          <p><strong>Total invertido:</strong> $${totalInvertido}</p>
+          <p>Total Ganancia/Pérdida: <span class="${claseTotal}">$${totalGanancia.toFixed(2)}</span></p>
+          <p><strong>Total final:</strong> $${totalFinal.toFixed(2)}</p>
+        </div>`;
+
+      if (totalInvertido === 0) {
+        resultadoHTML = "<p>Por favor, ingresá al menos un monto para simular.</p>";
+      }
+
+      document.getElementById("resultado").innerHTML = resultadoHTML;
+
+      // === GRAFICO DE TORTA ===
+      const ctxTorta = document.getElementById("graficoTorta");
+      const ctxBarras = document.getElementById("graficoBarras");
+
+      const labels = Object.keys(montos).filter(t => montos[t] > 0);
+      const valores = Object.values(montos).filter(v => v > 0);
+
+      if (chartTorta) chartTorta.destroy();
+      if (chartBarras) chartBarras.destroy();
+
+      chartTorta = new Chart(ctxTorta, {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            data: valores,
+            backgroundColor: ['#FFD700', '#E6C200', '#BFA300', '#998100'],
+          }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: '#fff' } } }
+        }
+      });
+
+      // === GRAFICO DE BARRAS ===
+      chartBarras = new Chart(ctxBarras, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Rendimiento (%)',
+            data: rendimientoData,
+            backgroundColor: '#FFD700'
+          }]
+        },
+        options: {
+          scales: {
+            x: { ticks: { color: '#fff' } },
+            y: { ticks: { color: '#fff' } }
+          },
+          plugins: { legend: { labels: { color: '#fff' } } }
+        }
+      });
     }
-  }
 
-  const totalFinal = totalInvertido + totalGanancia;
-  const claseTotal = totalGanancia >=0 ? "positivo" : "negativo";
-  resultadoHTML += `<div class="inversion">
-    <p><strong>Total invertido: $${totalInvertido}</strong></p>
-    <p>Total Ganancia/Pérdida: <span class="${claseTotal}">$${totalGanancia.toFixed(2)}</span></p>
-    <p>Total Final: <strong>$${totalFinal.toFixed(2)}</strong></p>
-  </div>`;
-
-  if(totalInvertido === 0){
-    resultadoHTML = "<p>Ingresá al menos un monto para simular.</p>";
-  }
-
-  document.getElementById("resultado").innerHTML = resultadoHTML;
-}
-
-function reiniciar() {
-  document.getElementById("montoPlazo").value = "";
-  document.getElementById("montoFondo").value = "";
-  document.getElementById("montoAcciones").value = "";
-  document.getElementById("montoCripto").value = "";
-  document.getElementById("resultado").innerHTML = "";
-}
-</script>
-
+    function reiniciar() {
+      document.querySelectorAll("input").forEach(i => i.value = "");
+      document.getElementById("resultado").innerHTML = "";
+      if (chartTorta) chartTorta.destroy();
+      if (chartBarras) chartBarras.destroy();
+    }
+  </script>
 </body>
 </html>
+
 
